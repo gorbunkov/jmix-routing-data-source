@@ -1,5 +1,6 @@
 package com.company.sample.view.datasourceconfigentity;
 
+import com.company.sample.datasource.DataSourceRepository;
 import com.company.sample.entity.DataSourceConfigEntity;
 import com.company.sample.view.main.MainView;
 import com.vaadin.flow.component.ClickEvent;
@@ -8,10 +9,18 @@ import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
+import io.jmix.core.EntitySet;
+import io.jmix.core.EntityStates;
+import io.jmix.core.SaveContext;
 import io.jmix.flowui.kit.action.ActionPerformedEvent;
 import io.jmix.flowui.kit.component.button.JmixButton;
 import io.jmix.flowui.model.*;
+import io.jmix.flowui.util.RemoveOperation;
 import io.jmix.flowui.view.*;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.Collection;
+import java.util.Set;
 
 @Route(value = "dataSourceConfigEntities", layout = MainView.class)
 @ViewController("DataSourceConfigEntity.list")
@@ -40,6 +49,10 @@ public class DataSourceConfigEntityListView extends StandardListView<DataSourceC
 
     @ViewComponent
     private HorizontalLayout detailActions;
+    @Autowired
+    private DataSourceRepository dataSourceRepository;
+    @Autowired
+    private EntityStates entityStates;
 
     @Subscribe
     public void onInit(final InitEvent event) {
@@ -95,5 +108,21 @@ public class DataSourceConfigEntityListView extends StandardListView<DataSourceC
 
         detailActions.setVisible(editing);
         listLayout.setEnabled(!editing);
+    }
+
+    @Install(to = "dataSourceConfigEntitiesDataGrid.remove", subject = "afterActionPerformedHandler")
+    private void dataSourceConfigEntitiesDataGridRemoveAfterActionPerformedHandler(final RemoveOperation.AfterActionPerformedEvent<DataSourceConfigEntity> afterActionPerformedEvent) {
+        for (DataSourceConfigEntity dataSourceConfigEntity : afterActionPerformedEvent.getItems()) {
+            dataSourceRepository.removeDatasource(dataSourceConfigEntity.getName());
+        }
+    }
+
+    @Subscribe(target = Target.DATA_CONTEXT)
+    public void onPostSave(final DataContext.PostSaveEvent event) {
+        EntitySet savedInstances = event.getSavedInstances();
+        Collection<DataSourceConfigEntity> sourceConfigEntityCollection = savedInstances.getAll(DataSourceConfigEntity.class);
+        for (DataSourceConfigEntity dataSourceConfigEntity : sourceConfigEntityCollection) {
+            dataSourceRepository.updateDatasource(dataSourceConfigEntity);
+        }
     }
 }
