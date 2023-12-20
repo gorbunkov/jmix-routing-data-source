@@ -39,6 +39,9 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -51,6 +54,11 @@ import java.util.stream.Collectors;
 public class LoginView extends StandardView implements LocaleChangeObserver {
 
     private static final Logger log = LoggerFactory.getLogger(LoginView.class);
+
+    /**
+     * Name of the cookie that stores the last used data source configuration name.
+     */
+    private static final String LAST_DATA_SOURCE_CONFIG_NAME_COOKIE = "jmixLastDataSourceConfigName";
 
     @ViewComponent
     private H2 loginFormTitle;
@@ -94,6 +102,9 @@ public class LoginView extends StandardView implements LocaleChangeObserver {
     private DialogWindows dialogWindows;
     @Autowired
     private DataSourceRepository dataSourceRepository;
+
+    protected AppCookies cookies;
+
 
     @Subscribe
     public void onInit(final InitEvent event) {
@@ -144,6 +155,7 @@ public class LoginView extends StandardView implements LocaleChangeObserver {
 
             String dataSourceConfigName = databaseConnectionField.getValue();
             sessionData.setAttribute(MyRoutingDatasource.DATA_SOURCE_NAME_PARAMETER, dataSourceConfigName);
+            getCookies().addCookie(LAST_DATA_SOURCE_CONFIG_NAME_COOKIE, Base64.getEncoder().encodeToString(dataSourceConfigName.getBytes(StandardCharsets.UTF_8)));
 
         } catch (final BadCredentialsException | DisabledException | LockedException | AccessDeniedException e) {
             log.warn("Login failed for user '{}': {}", username, e.toString());
@@ -169,7 +181,16 @@ public class LoginView extends StandardView implements LocaleChangeObserver {
         List<String> datasourceNames = dataSourceRepository.getDatasourceNames();
         databaseConnectionField.setItems(datasourceNames);
         if (!datasourceNames.isEmpty()) {
-            databaseConnectionField.setValue(datasourceNames.get(0));
+            String lastDataSourceConfigName = null;
+            String cookieValue = getCookies().getCookieValue(LAST_DATA_SOURCE_CONFIG_NAME_COOKIE);
+            if (cookieValue != null) {
+                lastDataSourceConfigName = new String(Base64.getDecoder().decode(cookieValue), StandardCharsets.UTF_8);
+            }
+            if (lastDataSourceConfigName != null && datasourceNames.contains(lastDataSourceConfigName)) {
+                databaseConnectionField.setValue(lastDataSourceConfigName);
+            } else {
+                databaseConnectionField.setValue(datasourceNames.get(0));
+            }
         }
     }
 
@@ -182,5 +203,12 @@ public class LoginView extends StandardView implements LocaleChangeObserver {
                     databaseConnectionField.setValue(datasourceConfigEntity.getName());
                 })
                 .open();
+    }
+
+    protected AppCookies getCookies() {
+        if (cookies == null) {
+            cookies = new AppCookies();
+        }
+        return cookies;
     }
 }
