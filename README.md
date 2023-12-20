@@ -9,7 +9,7 @@ The main datastore must be defined.
 ```properties
 main.datasource.url = jdbc:postgresql://localhost/routingdatasource
 main.datasource.username = root
-main.datasource.password =root
+main.datasource.password = root
 ```
 
 It serves for the following purposes:
@@ -17,6 +17,8 @@ It serves for the following purposes:
 1. This datastore is used when it impossible to determine the datasource name from the session attribute (e.g. from a background task).
 2. It defines DBMS type (postgres, oracle, etc.) for all custom data sources defined on the login view.
 3. It stores `DataStoreConfigEntity` records.
+
+## Main Classes
 
 `DataSourceRepository` stores DataSource instances for all defined database connections.
 
