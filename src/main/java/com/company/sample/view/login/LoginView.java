@@ -155,7 +155,11 @@ public class LoginView extends StandardView implements LocaleChangeObserver {
 
             String dataSourceConfigName = databaseConnectionField.getValue();
             sessionData.setAttribute(MyRoutingDatasource.DATA_SOURCE_NAME_PARAMETER, dataSourceConfigName);
-            getCookies().addCookie(LAST_DATA_SOURCE_CONFIG_NAME_COOKIE, Base64.getEncoder().encodeToString(dataSourceConfigName.getBytes(StandardCharsets.UTF_8)));
+            if (!Strings.isNullOrEmpty(dataSourceConfigName)) {
+                getCookies().addCookie(LAST_DATA_SOURCE_CONFIG_NAME_COOKIE, Base64.getEncoder().encodeToString(dataSourceConfigName.getBytes(StandardCharsets.UTF_8)));
+            } else {
+                getCookies().removeCookie(LAST_DATA_SOURCE_CONFIG_NAME_COOKIE);
+            }
 
         } catch (final BadCredentialsException | DisabledException | LockedException | AccessDeniedException e) {
             log.warn("Login failed for user '{}': {}", username, e.toString());
