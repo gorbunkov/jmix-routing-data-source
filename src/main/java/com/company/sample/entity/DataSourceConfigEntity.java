@@ -3,11 +3,13 @@ package com.company.sample.entity;
 import io.jmix.core.entity.annotation.JmixGeneratedValue;
 import io.jmix.core.metamodel.annotation.InstanceName;
 import io.jmix.core.metamodel.annotation.JmixEntity;
+import io.jmix.core.metamodel.annotation.Store;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.UUID;
 
+@Store(name = "dsconfig")
 @JmixEntity
 @Table(name = "DATA_SOURCE_CONFIG_ENTITY", indexes = {
         @Index(name = "IDX_DATA_SOURCE_CONFIG_ENTITY_UNQ", columnList = "NAME", unique = true)
